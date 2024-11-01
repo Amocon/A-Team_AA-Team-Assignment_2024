@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "aa-team-assignment"
+version = "0.1.0"
+description = ""
+authors = ["Amocon <120689212+Amocon@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+tensorflow = "^2.18.0"
+matplotlib = "^3.9.2"
+notebook = "^7.2.2"
+ipykernel = "^6.29.5"
+pandas = "^2.2.3"
+
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
