@@ -82,3 +82,15 @@ You have been provided with data on individual EV charging sessions at two charg
 Adhere to Section 2 in the Syllabus for detailed deliverable requirements. Use version-control systems like GitHub for milestone tracking and final submission (please invite Janik Muires at muires@wiso.uni-koeln.de if using a private repository). Final report submission will be through ILIAS.
 
 **Note:** Failure to provide milestone progress will result in failure of the team assignment portion of the portfolio exam, which leads to failing the course.
+
+---
+
+## 5. Installation & Setup 
+
+1. Install [Python 3.11](https://www.python.org/downloads/release/python-3110/)
+2. Install [poetry](https://python-poetry.org) 
+3. Check whether poetry was correctly installed and added to your path. 
+   Execute "poetry --version" in your terminal to check. 
+   Use poetry version >= 1.5.0
+4. Download the Poetry virtual environment with the Python libraries defined in the [pyproject.toml](pyproject.toml) file. 
+   Navigate into the "A-Team_AA-Team-Assignment_2024" folder and excecute "poetry install".
