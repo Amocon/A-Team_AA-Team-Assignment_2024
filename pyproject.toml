@@ -6,7 +6,7 @@ authors = ["Amocon <120689212+Amocon@users.noreply.github.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "~3.11"
 tensorflow = "^2.18.0"
 matplotlib = "^3.9.2"
 notebook = "^7.2.2"
