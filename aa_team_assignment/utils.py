@@ -38,10 +38,11 @@ def plot_histogram(ax, season_df: pd.DataFrame, year: str = None) -> None:
     ax.grid(axis='y', linestyle='--', alpha=0.7)
 
 
-def plot_hist(dfs_by_year: dict = None, season_df: pd.DataFrame = None, title: str = "") -> None:
+def plot_hist_per_year(df: pd.DataFrame, title: str = "") -> None:
     """
     Plots a histogram for either multiple years (dfs_by_year) or a single year's data (season_df).
     """
+    dfs_by_year = {year: df[df["connectionYear"] == year] for year in sorted(df["connectionYear"].unique())}
     if dfs_by_year:
         num_years = len(dfs_by_year)
         fig, axes = plt.subplots(1, num_years, figsize=(15, 5), sharey=True)
@@ -56,20 +57,36 @@ def plot_hist(dfs_by_year: dict = None, season_df: pd.DataFrame = None, title: s
 
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout to fit title
         plt.show()
-    elif season_df is not None:
-        fig, ax = plt.subplots(figsize=(10, 6))
-        plot_histogram(ax, season_df)
-        plt.title(title)
-        plt.tight_layout()
-        plt.show()
-    else:
-        raise ValueError("Provide either 'dfs_by_year' or 'season_df' to plot.")
+
+def plot_monthly_hist(season_df: pd.DataFrame = None, title: str = "") -> None:
+    fig, ax = plt.subplots(figsize=(10, 6))
+    plot_histogram(ax, season_df)
+    plt.title(title)
+    plt.tight_layout()
+    plt.show()
 
 
 seasons = pd.read_feather("../data/burbank_seasons.feather")
 
-def get_season(date: Timestamp):
+def get_season_year(date: Timestamp) -> Optional[int]:
+    """
+    This ensures that the season 'Winter' the year is correctly assigned. By adding the Winter months late in a year to the next year.
+    """
+    year = date.year
+    # Filter the DataFrame for the desired year
+    year_row = seasons[seasons['Year'] == year]
 
+    # Check if the year exists in the DataFrame
+    if year_row.empty:
+        return None
+
+    if date >= year_row['Winter Start'].iloc[0]:
+        return year + 1
+    else:
+        return year
+
+
+def get_season(date: Timestamp) -> Optional[str]:
     year = date.year
     # Filter the DataFrame for the desired year
     year_row = seasons[seasons['Year'] == year]
@@ -94,10 +111,10 @@ def get_season(date: Timestamp):
             if year == 2022 and date >= start_date:
                 return season
             if date.month == 12:
-                # Set start date for winter to the previous year's Winter Start
+                # Set end date for winter to the next year's Spring Start
                 end_date = seasons[seasons['Year'] == year + 1].iloc[0][end_col]
             else:
-                # Set end date for winter to the next year's Spring Start
+                # Set start date for winter to the previous year's Winter Start
                 start_date = seasons[seasons['Year'] == year - 1].iloc[0][start_col]
 
         if start_date <= date < end_date:
@@ -105,12 +122,11 @@ def get_season(date: Timestamp):
     raise ValueError(f"Date {date} does not fall into any season range")
 
 
-import pandas as pd
-
 def calculate_seasonal_factors(df, year):
     if 'season' not in df.columns:
         raise ValueError("Das DataFrame muss eine Spalte 'season' enthalten.")
 
+    season_order = ['Winter', 'Spring', 'Summer', 'Autumn']
     season_stats = df['season'].value_counts()
     total_records = season_stats.sum()
     average_records = total_records / len(season_stats)
@@ -122,6 +138,36 @@ def calculate_seasonal_factors(df, year):
         'season': season_stats.index,
         'record_count': season_stats.values,
         'seasonal_factor': seasonal_factors.values
+    }).sort_values('season')
+    result['season'] = pd.Categorical(result['season'], categories=season_order, ordered=True)
+    return result
+
+
+def calculate_weekday_season_factors(df, weekday_column, year):
+    if weekday_column not in df.columns:
+        raise ValueError(f"The DataFrame must contain the column '{weekday_column}'.")
+
+    # Calculate the value counts for each weekday
+    weekday_counts = df[weekday_column].value_counts()
+
+    # Calculate the total records and the average records per weekday
+    total_records = weekday_counts.sum()
+    average_records = total_records / len(weekday_counts)
+
+    # Calculate seasonal factors (relative occurrence to the average)
+    seasonal_factors = weekday_counts / average_records
+
+    # Create a DataFrame with the results
+    result = pd.DataFrame({
+        'weekday': weekday_counts.index,
+        'record_count': weekday_counts.values,
+        'seasonal_factor': seasonal_factors.values,
+        'year': year
     })
+
+    # Sort by weekday name (Monday to Sunday)
+    weekday_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    result['weekday'] = pd.Categorical(result['weekday'], categories=weekday_order, ordered=True)
+    result = result.sort_values('weekday')
 
     return result
