@@ -58,6 +58,7 @@ def plot_hist_per_year(df: pd.DataFrame, title: str = "") -> None:
         plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout to fit title
         plt.show()
 
+
 def plot_monthly_hist(season_df: pd.DataFrame = None, title: str = "") -> None:
     fig, ax = plt.subplots(figsize=(10, 6))
     plot_histogram(ax, season_df)
@@ -67,6 +68,7 @@ def plot_monthly_hist(season_df: pd.DataFrame = None, title: str = "") -> None:
 
 
 seasons = pd.read_feather("../data/burbank_seasons.feather")
+
 
 def get_season_year(date: Timestamp) -> Optional[int]:
     """
@@ -171,3 +173,63 @@ def calculate_weekday_season_factors(df, weekday_column, year):
     result = result.sort_values('weekday')
 
     return result
+
+
+def calculate_range(user_inputs, column, date_format="%a, %d %b %Y %H:%M:%S GMT"):
+    """
+    Calculate the range (max - min) of values for a specified column from a list of user inputs.
+
+    Parameters:
+        user_inputs (list of dict): A list of dictionaries where the values are the inputs provided by the user.
+        column (str): The key for which the range is to be calculated.
+        date_format (str, optional): The date format string for the column if the column contains date strings.
+
+    Returns:
+        float: The range (max - min) of the values in the specified column.
+    """
+    values = [input_data[column] for input_data in user_inputs if column in input_data]
+    if len(values) > 1:
+        # If numeric, calculate range as max - min
+        if isinstance(values[0], (int, float)):
+            return max(values) - min(values)
+        # If string, attempt to convert to datetime and calculate the range
+        elif isinstance(values[0], str):
+            values = pd.to_datetime(values, format=date_format, errors='coerce')
+            values = values.dropna()
+            if len(values) > 1:
+                return values.max() - values.min()
+            else:
+                return pd.Timedelta(0)
+    return 0
+
+
+def plot_top_n_distribution(df, input_count, column_for_distribution, top_n=10):
+    """
+    Filters the DataFrame based on input_count and plots the top n categories of the specified column.
+
+    Parameters:
+        df (pd.DataFrame): The input DataFrame.
+        input_count (int): The value of 'inputCount' to filter rows.
+        column_for_distribution (str): The column to calculate and plot the distribution.
+        top_n (int): Number of top categories to display.
+
+    Returns:
+        pd.Series: The top N distribution of the specified column, sorted by index.
+    """
+
+    # Filter the DataFrame
+    filtered_df = df[df["inputCount"] == input_count]
+
+    # Calculate the distribution and get the top N categories
+    distribution = filtered_df[column_for_distribution].value_counts().nlargest(top_n).sort_index()
+
+    # Plot the distribution
+    plt.figure(figsize=(10, 6))
+    distribution.plot(kind="bar")
+    plt.title(f"Top {top_n} {column_for_distribution} for inputCount = {input_count}")
+    plt.xlabel(column_for_distribution)
+    plt.ylabel("Frequency")
+    plt.xticks(rotation=45)
+    plt.grid(axis="y", linestyle="--", alpha=0.7)
+    plt.tight_layout()
+    plt.show()
