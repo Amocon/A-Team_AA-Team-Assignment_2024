@@ -233,3 +233,85 @@ def plot_top_n_distribution(df, input_count, column_for_distribution, top_n=10):
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.tight_layout()
     plt.show()
+
+
+def compare_poly(df: pd.DataFrame, feature: str, target: str, poly_num: int = 50):
+    """Check the best polynomial degree for the given feature.
+
+    Parameters:
+        df (pd.DataFrame): The input DataFrame.
+        feature (str): The feature to be used for polynomial regression.
+        target (str): The target variable for polynomial regression.
+        poly_num (int): The maximum polynomial degree to check.
+    """
+
+    X = np.array([df[feature].values, np.ones(len(df))]).T
+    np.random.seed(10)
+    perm = np.random.permutation(X.shape[0])
+    idx_train = perm[:int(len(perm) * 0.7)]
+    idx_cv = perm[int(len(perm) * 0.7):]
+
+    x_train, y_train = df[feature].iloc[idx_train].values, df[target].iloc[idx_train].values
+    x_cv, y_cv = df[feature].iloc[idx_cv].values, df[target].iloc[idx_cv].values
+
+    # Standardize the data
+    min_x_train, max_x_train = x_train.min(), x_train.max()
+    x_train = 2 * (x_train - min_x_train) / (max_x_train - min_x_train) - 1
+    x_cv = 2 * (x_cv - min_x_train) / (max_x_train - min_x_train) - 1
+
+    def poly_feat(x, degree):
+        return np.array([x ** i for i in range(degree, -1, -1)]).T
+
+    def ls_poly(x, y, degree):
+        X = np.array([x ** i for i in range(degree, -1, -1)]).T
+        return np.linalg.solve(X.T @ X, X.T @ y)
+
+    err_train = []
+    err_cv = []
+    for i in range(poly_num):
+        theta = ls_poly(x_train, y_train, i)
+        err_train.append(((poly_feat(x_train, i) @ theta - y_train) ** 2).mean())
+        err_cv.append(((poly_feat(x_cv, i) @ theta - y_cv) ** 2).mean())
+    plt.semilogy(range(poly_num), err_train, range(poly_num), err_cv)
+    plt.legend(["Training", "Validation"])
+    plt.xlabel("Polynomial degree")
+    plt.ylabel("Mean squared error")
+
+
+def compare_models(measure, poly_mae, nn_mae, poly_r2, nn_r2):
+    """
+    Displays a histogram comparing the performance of two models for a given measure.
+
+    Args:
+    - measure (str): The measure to compare ('mae' or 'r2').
+    - poly_mae (float): MAE for the Poly model.
+    - nn_mae (float): MAE for the NN model.
+    - poly_r2 (float): R² for the Poly model.
+    - nn_r2 (float): R² for the NN model.
+    """
+    # Select the data based on the measure
+    if measure.lower() == 'mae':
+        metric_name = 'Mean Absolute Error (MAE)'
+        poly_value = poly_mae
+        nn_value = nn_mae
+    elif measure.lower() == 'r2':
+        metric_name = 'R² Score'
+        poly_value = poly_r2
+        nn_value = nn_r2
+    else:
+        raise ValueError("Invalid measure. Please choose 'mae' or 'r2'.")
+
+    # Data for plotting
+    models = ['Polynomial regression', 'Neural network']
+    values = [poly_value, nn_value]
+
+    # Create the bar plot
+    plt.bar(models, values, color=['blue', 'orange'], alpha=0.7)
+    plt.title(f'Comparison of {metric_name}')
+    plt.ylabel(metric_name)
+    plt.xlabel('Models')
+    plt.ylim(0, max(values) + 0.1 * max(values))  # Add some padding to the y-axis for visibility
+
+    # Show the plot
+    plt.tight_layout()
+    plt.show()
