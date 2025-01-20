@@ -273,6 +273,7 @@ def compare_poly(df: pd.DataFrame, feature: str, target: str, poly_num: int = 50
         err_train.append(((poly_feat(x_train, i) @ theta - y_train) ** 2).mean())
         err_cv.append(((poly_feat(x_cv, i) @ theta - y_cv) ** 2).mean())
     plt.semilogy(range(poly_num), err_train, range(poly_num), err_cv)
+    plt.title(f"Polynomial regression loss for dimension '{feature}'")
     plt.legend(["Training", "Validation"])
     plt.xlabel("Polynomial degree")
     plt.ylabel("Mean squared error")
@@ -314,4 +315,30 @@ def compare_models(measure, poly_mae, nn_mae, poly_r2, nn_r2):
 
     # Show the plot
     plt.tight_layout()
+    plt.show()
+
+
+def plot_error_curves(epoch_start, epoch_end, step_size, his_df):
+    """Plot the error curves for a neural network model to determine the optimal number of epachs.
+
+    Args:
+    - epoch_start (int): The starting epoch for the plot.
+    - epoch_end (int): The ending epoch for the plot.
+    - step_size (int): The step size for the x-axis ticks.
+    - his_df (DataFrame): The history DataFrame containing the training and validation errors.
+        """
+    # Calculate RMSE for training and validation sets
+    root_metrics_df = his_df[["mse", "val_mse"]].apply(np.sqrt)
+    root_metrics_df.rename({"mse":"rmse", "val_mse":"val_rmse"}, axis=1, inplace=True)
+    # Slice dataframe
+    root_metrics_df = root_metrics_df.iloc[epoch_start-1:epoch_end]
+    # Plot the error curves
+    plt.Figure(figsize=(14,6), dpi=100)
+    plt.plot(root_metrics_df["rmse"], label = 'Training error')
+    plt.plot(root_metrics_df["val_rmse"], label = 'Validation error')
+    plt.xlabel("Epochs")
+    plt.ylabel("Root Mean Squared Error")
+    # Display epochs as given in the input
+    plt.xticks(range(epoch_start, epoch_end + 1, step_size))
+    plt.legend()
     plt.show()
