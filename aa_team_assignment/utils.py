@@ -59,14 +59,6 @@ def plot_hist_per_year(df: pd.DataFrame, title: str = "") -> None:
         plt.show()
 
 
-def plot_monthly_hist(season_df: pd.DataFrame = None, title: str = "") -> None:
-    fig, ax = plt.subplots(figsize=(10, 6))
-    plot_histogram(ax, season_df)
-    plt.title(title)
-    plt.tight_layout()
-    plt.show()
-
-
 seasons = pd.read_feather("../data/burbank_seasons.feather")
 
 
