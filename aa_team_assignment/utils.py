@@ -279,7 +279,7 @@ def compare_poly(df: pd.DataFrame, feature: str, target: str, poly_num: int = 50
     plt.ylabel("Mean squared error")
 
 
-def compare_models(poly_values, nn_values):
+def compare_models(poly_values, nn_values, compare_with_cross_val=False):
     """
     Displays a bar plot comparing the performance of two models across three metrics: MAE, RMSE, and R².
 
@@ -291,13 +291,20 @@ def compare_models(poly_values, nn_values):
     poly_color = 'blue'
     nn_color = 'orange'
 
+    if compare_with_cross_val:
+        label_1 = 'Cross-validation'
+        label_2 = 'Test set'
+    else:
+        label_1 = 'Polynomial regression'
+        label_2 = 'Neural network'
+
     # Data for plotting
     bar_width = 0.25
     index = range(len(metrics))
 
     # Create the bar plots for the models
-    plt.bar([i - bar_width/2 for i in index], poly_values, bar_width, color=poly_color, alpha=0.7, label='Polynomial regression')
-    plt.bar([i + bar_width/2 for i in index], nn_values, bar_width, color=nn_color, alpha=0.7, label='Neural network')
+    plt.bar([i - bar_width/2 for i in index], poly_values, bar_width, color=poly_color, alpha=0.7, label=label_1)
+    plt.bar([i + bar_width/2 for i in index], nn_values, bar_width, color=nn_color, alpha=0.7, label=label_2)
 
     plt.title('Comparison of MAE, RMSE, and R²')
     plt.ylabel('Value')
@@ -325,7 +332,7 @@ def plot_error_curves(epoch_start, epoch_end, step_size, his_df):
     - epoch_end (int): The ending epoch for the plot.
     - step_size (int): The step size for the x-axis ticks.
     - his_df (DataFrame): The history DataFrame containing the training and validation errors.
-        """
+    """
     # Calculate RMSE for training and validation sets
     root_metrics_df = his_df[["mse", "val_mse"]].apply(np.sqrt)
     root_metrics_df.rename({"mse":"rmse", "val_mse":"val_rmse"}, axis=1, inplace=True)
