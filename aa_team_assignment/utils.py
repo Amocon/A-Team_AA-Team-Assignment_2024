@@ -279,41 +279,40 @@ def compare_poly(df: pd.DataFrame, feature: str, target: str, poly_num: int = 50
     plt.ylabel("Mean squared error")
 
 
-def compare_models(measure, poly_mae, nn_mae, poly_r2, nn_r2):
+def compare_models(poly_values, nn_values):
     """
-    Displays a histogram comparing the performance of two models for a given measure.
+    Displays a bar plot comparing the performance of two models across three metrics: MAE, RMSE, and R².
 
-    Args:
-    - measure (str): The measure to compare ('mae' or 'r2').
-    - poly_mae (float): MAE for the Poly model.
-    - nn_mae (float): MAE for the NN model.
-    - poly_r2 (float): R² for the Poly model.
-    - nn_r2 (float): R² for the NN model.
+    Parameters:
+    - poly_values (list): List of values for the Polynomial model.
+    - nn_values (list): List of values for the Neural Network model.
     """
-    # Select the data based on the measure
-    if measure.lower() == 'mae':
-        metric_name = 'Mean Absolute Error (MAE)'
-        poly_value = poly_mae
-        nn_value = nn_mae
-    elif measure.lower() == 'r2':
-        metric_name = 'R² Score'
-        poly_value = poly_r2
-        nn_value = nn_r2
-    else:
-        raise ValueError("Invalid measure. Please choose 'mae' or 'r2'.")
+    metrics = ['MAE', 'RMSE', 'R²']
+    poly_color = 'blue'
+    nn_color = 'orange'
 
     # Data for plotting
-    models = ['Polynomial regression', 'Neural network']
-    values = [poly_value, nn_value]
+    bar_width = 0.25
+    index = range(len(metrics))
 
-    # Create the bar plot
-    plt.bar(models, values, color=['blue', 'orange'], alpha=0.7)
-    plt.title(f'Comparison of {metric_name}')
-    plt.ylabel(metric_name)
-    plt.xlabel('Models')
-    plt.ylim(0, max(values) + 0.1 * max(values))  # Add some padding to the y-axis for visibility
+    # Create the bar plots for the models
+    plt.bar([i - bar_width/2 for i in index], poly_values, bar_width, color=poly_color, alpha=0.7, label='Polynomial regression')
+    plt.bar([i + bar_width/2 for i in index], nn_values, bar_width, color=nn_color, alpha=0.7, label='Neural network')
 
-    # Show the plot
+    plt.title('Comparison of MAE, RMSE, and R²')
+    plt.ylabel('Value')
+    plt.xlabel('Metric')
+    plt.xticks(index, metrics)
+    plt.ylim(0, max(max(poly_values), max(nn_values)) + 0.1 * max(max(poly_values), max(nn_values)))
+
+    # Add the absolute numbers on top of each bar
+    for i, value in enumerate(poly_values):
+        plt.text(i - bar_width/2, value + 0.02, f'{value:.2f}', ha='center', va='bottom', fontsize=10, color='black')
+    for i, value in enumerate(nn_values):
+        plt.text(i + bar_width/2, value + 0.02, f'{value:.2f}', ha='center', va='bottom', fontsize=10, color='black')
+
+    plt.legend(title='Models')
+
     plt.tight_layout()
     plt.show()
 
