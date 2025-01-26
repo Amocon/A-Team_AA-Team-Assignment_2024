@@ -1,4 +1,4 @@
-"""This code is the optimized version from chat-gpt of a code I have written"""
+"""This code is the optimized (mostly styling) version from chat-gpt of a code I have written"""
 import streamlit as st
 import pandas as pd
 import altair as alt
