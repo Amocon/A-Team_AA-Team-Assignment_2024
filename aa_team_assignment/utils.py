@@ -59,14 +59,6 @@ def plot_hist_per_year(df: pd.DataFrame, title: str = "") -> None:
         plt.show()
 
 
-def plot_monthly_hist(season_df: pd.DataFrame = None, title: str = "") -> None:
-    fig, ax = plt.subplots(figsize=(10, 6))
-    plot_histogram(ax, season_df)
-    plt.title(title)
-    plt.tight_layout()
-    plt.show()
-
-
 seasons = pd.read_feather("../data/burbank_seasons.feather")
 
 
@@ -273,45 +265,78 @@ def compare_poly(df: pd.DataFrame, feature: str, target: str, poly_num: int = 50
         err_train.append(((poly_feat(x_train, i) @ theta - y_train) ** 2).mean())
         err_cv.append(((poly_feat(x_cv, i) @ theta - y_cv) ** 2).mean())
     plt.semilogy(range(poly_num), err_train, range(poly_num), err_cv)
+    plt.title(f"Polynomial regression loss for dimension '{feature}'")
     plt.legend(["Training", "Validation"])
     plt.xlabel("Polynomial degree")
     plt.ylabel("Mean squared error")
 
 
-def compare_models(measure, poly_mae, nn_mae, poly_r2, nn_r2):
+def compare_models(poly_values, nn_values, compare_with_cross_val=False):
     """
-    Displays a histogram comparing the performance of two models for a given measure.
+    Displays a bar plot comparing the performance of two models across three metrics: MAE, RMSE, and R².
 
-    Args:
-    - measure (str): The measure to compare ('mae' or 'r2').
-    - poly_mae (float): MAE for the Poly model.
-    - nn_mae (float): MAE for the NN model.
-    - poly_r2 (float): R² for the Poly model.
-    - nn_r2 (float): R² for the NN model.
+    Parameters:
+    - poly_values (list): List of values for the Polynomial model.
+    - nn_values (list): List of values for the Neural Network model.
     """
-    # Select the data based on the measure
-    if measure.lower() == 'mae':
-        metric_name = 'Mean Absolute Error (MAE)'
-        poly_value = poly_mae
-        nn_value = nn_mae
-    elif measure.lower() == 'r2':
-        metric_name = 'R² Score'
-        poly_value = poly_r2
-        nn_value = nn_r2
+    metrics = ['MAE', 'RMSE', 'R²']
+    poly_color = 'blue'
+    nn_color = 'orange'
+
+    if compare_with_cross_val:
+        label_1 = 'Cross-validation'
+        label_2 = 'Test set'
     else:
-        raise ValueError("Invalid measure. Please choose 'mae' or 'r2'.")
+        label_1 = 'Polynomial regression'
+        label_2 = 'Neural network'
 
     # Data for plotting
-    models = ['Polynomial regression', 'Neural network']
-    values = [poly_value, nn_value]
+    bar_width = 0.25
+    index = range(len(metrics))
 
-    # Create the bar plot
-    plt.bar(models, values, color=['blue', 'orange'], alpha=0.7)
-    plt.title(f'Comparison of {metric_name}')
-    plt.ylabel(metric_name)
-    plt.xlabel('Models')
-    plt.ylim(0, max(values) + 0.1 * max(values))  # Add some padding to the y-axis for visibility
+    # Create the bar plots for the models
+    plt.bar([i - bar_width/2 for i in index], poly_values, bar_width, color=poly_color, alpha=0.7, label=label_1)
+    plt.bar([i + bar_width/2 for i in index], nn_values, bar_width, color=nn_color, alpha=0.7, label=label_2)
 
-    # Show the plot
+    plt.title('Comparison of MAE, RMSE, and R²')
+    plt.ylabel('Value')
+    plt.xlabel('Metric')
+    plt.xticks(index, metrics)
+    plt.ylim(0, max(max(poly_values), max(nn_values)) + 0.1 * max(max(poly_values), max(nn_values)))
+
+    # Add the absolute numbers on top of each bar
+    for i, value in enumerate(poly_values):
+        plt.text(i - bar_width/2, value + 0.02, f'{value:.2f}', ha='center', va='bottom', fontsize=10, color='black')
+    for i, value in enumerate(nn_values):
+        plt.text(i + bar_width/2, value + 0.02, f'{value:.2f}', ha='center', va='bottom', fontsize=10, color='black')
+
+    plt.legend(title='Models')
+
     plt.tight_layout()
+    plt.show()
+
+
+def plot_error_curves(epoch_start, epoch_end, step_size, his_df):
+    """Plot the error curves for a neural network model to determine the optimal number of epachs.
+
+    Args:
+    - epoch_start (int): The starting epoch for the plot.
+    - epoch_end (int): The ending epoch for the plot.
+    - step_size (int): The step size for the x-axis ticks.
+    - his_df (DataFrame): The history DataFrame containing the training and validation errors.
+    """
+    # Calculate RMSE for training and validation sets
+    root_metrics_df = his_df[["mse", "val_mse"]].apply(np.sqrt)
+    root_metrics_df.rename({"mse":"rmse", "val_mse":"val_rmse"}, axis=1, inplace=True)
+    # Slice dataframe
+    root_metrics_df = root_metrics_df.iloc[epoch_start-1:epoch_end]
+    # Plot the error curves
+    plt.Figure(figsize=(14,6), dpi=100)
+    plt.plot(root_metrics_df["rmse"], label = 'Training error')
+    plt.plot(root_metrics_df["val_rmse"], label = 'Validation error')
+    plt.xlabel("Epochs")
+    plt.ylabel("Root Mean Squared Error")
+    # Display epochs as given in the input
+    plt.xticks(range(epoch_start, epoch_end + 1, step_size))
+    plt.legend()
     plt.show()
