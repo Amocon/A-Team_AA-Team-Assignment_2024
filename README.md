@@ -24,7 +24,7 @@ The Python Notebooks are  located in the `aa_team_assignment` directory and shou
 5. 03_clustering_analysis.ipynb
 6. 04_utilization_prediction.ipynb
 
-The additional interactive KPI-Dashboard can be started independently by executing the following command in the terminal: `poetry run streamlit run KPI-Dashboard.py`
+The additional interactive KPI-Dashboard should be started after the `02_2_kpis.ipynb` notebook, since the resulting data of this notebook is neccessary to run it. The KPI-Dashboard can be executed by the following command in the terminal: `poetry run streamlit run KPI-Dashboard.py`
 
 
 
